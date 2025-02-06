@@ -98,6 +98,27 @@ interface HistoryState {
   }[];
 }
 
+// modalState 인터페이스 추가
+interface ModalState {
+  isOpen: boolean;
+  nodeId: string;
+  nodeType: string;
+  config: NodeConfig | null;
+}
+
+interface ConnectionPointPosition {
+  x: number;
+  y: number;
+  type: ConnectionPointType;
+}
+
+interface NodeConnectionPoints {
+  top: ConnectionPointPosition;
+  right: ConnectionPointPosition;
+  bottom: ConnectionPointPosition;
+  left: ConnectionPointPosition;
+}
+
 const nodeStyles: Record<string, NodeStyle> = {
   "DB config": {
     backgroundColor: "var(--bg-primary)",
@@ -180,11 +201,43 @@ const getNodePreview = (node: Node): string => {
 };
 
 export default function Home() {
-  const [nodes, setNodes] = useState<Node[]>(() => {
-    // localStorage에서 노드 데이터를 불러옴
-    const saved = localStorage.getItem("canvasNodes");
-    return saved ? JSON.parse(saved) : [];
+  // localStorage 접근을 위한 상태 관리 수정
+  const [initialState, setInitialState] = useState({
+    isInitialized: false,
+    nodes: [] as Node[],
+    expandedItems: new Set<string>(),
+    isExpanded: true,
   });
+
+  // 컴포넌트 마운트 시 localStorage 데이터 로드
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedNodes = localStorage.getItem("canvasNodes");
+      const savedExpandedItems = localStorage.getItem("expandedMenuItems");
+      const savedSidebarState = localStorage.getItem("sidebarExpanded");
+
+      setInitialState({
+        isInitialized: true,
+        nodes: savedNodes ? JSON.parse(savedNodes) : [],
+        expandedItems: savedExpandedItems
+          ? new Set(JSON.parse(savedExpandedItems))
+          : new Set(),
+        isExpanded: savedSidebarState ? JSON.parse(savedSidebarState) : true,
+      });
+    }
+  }, []);
+
+  // 실제 상태들은 initialState에서 가져옴
+  const [nodes, setNodes] = useState<Node[]>(initialState.nodes);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(
+    initialState.expandedItems
+  );
+  const [isExpanded, setIsExpanded] = useState(initialState.isExpanded);
+
+  // 초기화가 완료되지 않았다면 로딩 상태 표시
+  if (!initialState.isInitialized) {
+    return <div>Loading...</div>;
+  }
 
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
@@ -200,7 +253,8 @@ export default function Home() {
     startX: null,
   });
 
-  const [modalState, setModalState] = useState({
+  // modalState 타입 지정
+  const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     nodeId: "",
     nodeType: "",
@@ -381,9 +435,9 @@ export default function Home() {
             border: "1px solid var(--success-border)",
           },
         });
-      } catch (err) {
+      } catch (err: unknown) {
         // 사용자가 취소한 경우 조용히 처리
-        if (err.name !== "AbortError") {
+        if (err instanceof Error && err.name !== "AbortError") {
           throw err;
         }
       }
@@ -476,8 +530,8 @@ export default function Home() {
             : "Invalid configuration file format"
         );
       }
-    } catch (err) {
-      if (err.name !== "AbortError") {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== "AbortError") {
         console.error("File upload error:", err);
         toast.error(
           err instanceof Error ? err.message : "Failed to load configuration",
@@ -648,7 +702,7 @@ export default function Home() {
       isOpen: true,
       nodeId: node.id,
       nodeType: node.type,
-      config: node.config || {},
+      config: node.config || null, // {} 대신 null 사용
     });
   };
 
@@ -795,30 +849,34 @@ export default function Home() {
       const canvasRect = canvasRef?.getBoundingClientRect();
       if (!canvasRect) return { x: 0, y: 0 };
 
-      // 연결점의 위치를 DOM 요소의 실제 위치 기준으로 계산
-      const x = nodeRect.left - canvasRect.left;
-      const y = nodeRect.top - canvasRect.top;
+      // 스크롤 위치 고려
+      const scrollLeft = canvasRef?.scrollLeft || 0;
+      const scrollTop = canvasRef?.scrollTop || 0;
+
+      // 캔버스 상대 좌표로 변환
+      const relativeX = nodeRect.left - canvasRect.left + scrollLeft;
+      const relativeY = nodeRect.top - canvasRect.top + scrollTop;
 
       switch (point.type) {
         case "top":
           return {
-            x: x + nodeRect.width / 2,
-            y: y,
+            x: relativeX + nodeRect.width / 2,
+            y: relativeY,
           };
         case "right":
           return {
-            x: x + nodeRect.width,
-            y: y + nodeRect.height / 2,
+            x: relativeX + nodeRect.width,
+            y: relativeY + nodeRect.height / 2,
           };
         case "bottom":
           return {
-            x: x + nodeRect.width / 2,
-            y: y + nodeRect.height,
+            x: relativeX + nodeRect.width / 2,
+            y: relativeY + nodeRect.height,
           };
         case "left":
           return {
-            x: x,
-            y: y + nodeRect.height / 2,
+            x: relativeX,
+            y: relativeY + nodeRect.height / 2,
           };
       }
     };
@@ -827,10 +885,13 @@ export default function Home() {
       if (!draggingConnection || !canvasRef) return { x: 0, y: 0 };
 
       const canvasRect = canvasRef.getBoundingClientRect();
-      const mouseX = draggingConnection.mousePosition.x - canvasRect.left;
-      const mouseY = draggingConnection.mousePosition.y - canvasRect.top;
+      const scrollLeft = canvasRef.scrollLeft;
+      const scrollTop = canvasRef.scrollTop;
 
-      return { x: mouseX, y: mouseY };
+      return {
+        x: draggingConnection.mousePosition.x - canvasRect.left + scrollLeft,
+        y: draggingConnection.mousePosition.y - canvasRect.top + scrollTop,
+      };
     };
 
     return (
@@ -881,10 +942,14 @@ export default function Home() {
   };
 
   // 노드의 연결점 위치를 계산하는 함수 추가
-  const getNodeConnectionPoints = (node: Node, nodeElement: HTMLElement) => {
+  const getNodeConnectionPoints = (
+    node: Node,
+    nodeElement: HTMLElement
+  ): NodeConnectionPoints => {
     const nodeWidth = node.width || 120;
     const nodeHeight = nodeElement.offsetHeight;
-    const points = {
+
+    return {
       top: {
         x: node.position.x + nodeWidth / 2,
         y: node.position.y,
@@ -906,7 +971,6 @@ export default function Home() {
         type: "left" as ConnectionPointType,
       },
     };
-    return points;
   };
 
   // 노드 클릭 핸들러 수정
@@ -932,28 +996,32 @@ export default function Home() {
     };
 
     // 클릭된 노드의 모든 연결점 위치 계산
-    const clickedNodePoints = getNodeConnectionPoints(
-      clickedNode,
-      clickedElement
-    );
+    const points = getNodeConnectionPoints(clickedNode, clickedElement);
 
     // 가장 가까운 연결점 찾기
-    let closestPoint = null;
+    let closestPoint: ConnectionPointPosition | null = null;
     let minDistance = Infinity;
 
-    Object.entries(clickedNodePoints).forEach(([_, point]) => {
+    // 각 방향의 연결점에 대해 거리 계산
+    const checkPoint = (point: ConnectionPointPosition) => {
       const distance = getDistance(clickPoint, point);
       if (distance < minDistance) {
         minDistance = distance;
         closestPoint = point;
       }
-    });
+    };
+
+    checkPoint(points.top);
+    checkPoint(points.right);
+    checkPoint(points.bottom);
+    checkPoint(points.left);
 
     if (closestPoint) {
+      const point = closestPoint as ConnectionPointPosition; // 타입 단언 추가
       const sourcePoint: ConnectionPoint = {
-        id: `${nodeId}-${closestPoint.type}`,
+        id: `${nodeId}-${point.type}`,
         nodeId,
-        type: closestPoint.type,
+        type: point.type,
       };
 
       setDraggingConnection({

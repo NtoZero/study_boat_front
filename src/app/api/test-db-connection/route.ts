@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import mysql from "mysql2/promise";
-import { Pool } from "pg";
+import pg from "pg";
 import { MongoClient } from "mongodb";
+
+// 옵션 타입 정의 추가
+interface DbOption {
+  key: string;
+  value: string;
+}
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +22,16 @@ export async function POST(request: Request) {
       poolSize,
       options,
       useSSL,
+    }: {
+      databaseType: string;
+      host: string;
+      port: number;
+      databaseName: string;
+      username: string;
+      password: string;
+      poolSize: number;
+      options: DbOption[];
+      useSSL: boolean;
     } = config;
 
     switch (databaseType) {
@@ -32,7 +48,7 @@ export async function POST(request: Request) {
               }
             : undefined,
           ...Object.fromEntries(
-            options?.map((opt) => [opt.key, opt.value]) || []
+            options?.map((opt: DbOption) => [opt.key, opt.value]) || []
           ),
         });
 
@@ -47,7 +63,7 @@ export async function POST(request: Request) {
       }
 
       case "postgresql": {
-        const pool = new Pool({
+        const pool = new pg.Pool({
           host,
           port: Number(port),
           user: username,
