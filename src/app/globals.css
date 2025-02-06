@@ -1,0 +1,47 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --header-bg: #2c3e50;
+  --header-text: #ffffff;
+  --bg-primary: #ffffff;
+  --text-primary: #333333;
+  --sidebar-bg: #f5f5f5;
+  --node-bg: #f0f0f0;
+  --border-color: #e0e0e0;
+  --hover-bg: #e0e0e0;
+  --button-bg: #ffffff;
+  --button-hover: #f5f5f5;
+  --menu-hover: rgba(0, 0, 0, 0.05);
+  --canvas-bg: #ffffff;
+  --canvas-grid: rgba(0, 0, 0, 0.1);
+  --primary-accent: #2563eb;
+  --primary-accent-hover: #1d4ed8;
+}
+
+.dark {
+  --header-bg: #1a202c;
+  --header-text: #ffffff;
+  --bg-primary: #1a202c;
+  --text-primary: #e2e8f0;
+  --sidebar-bg: #2d3748;
+  --node-bg: #2d3748;
+  --border-color: #4a5568;
+  --hover-bg: #4a5568;
+  --button-bg: #2d3748;
+  --button-hover: #4a5568;
+  --menu-hover: rgba(255, 255, 255, 0.1);
+  --canvas-bg: #000000;
+  --canvas-grid: rgba(255, 255, 255, 0.1);
+  --primary-accent: #60a5fa;
+  --primary-accent-hover: #93c5fd;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
