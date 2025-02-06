@@ -20,6 +20,55 @@
   --canvas-grid: rgba(0, 0, 0, 0.1);
   --primary-accent: #2563eb;
   --primary-accent-hover: #1d4ed8;
+
+  /* Node type specific colors - Light mode */
+  --node-db-bg: #e8f5e9;
+  --node-db-border: #66bb6a;
+  --node-db-text: #2e7d32;
+
+  --node-env-bg: #e3f2fd;
+  --node-env-border: #42a5f5;
+  --node-env-text: #1976d2;
+
+  --node-trigger-bg: #fff3e0;
+  --node-trigger-border: #ffa726;
+  --node-trigger-text: #f57c00;
+
+  --node-api-bg: #f3e5f5;
+  --node-api-border: #ab47bc;
+  --node-api-text: #7b1fa2;
+
+  --node-json-bg: #e8eaf6;
+  --node-json-border: #5c6bc0;
+  --node-json-text: #283593;
+
+  --node-done-bg: #e0f2f1;
+  --node-done-border: #26a69a;
+  --node-done-text: #00796b;
+
+  --success-bg: #e6f4ea;
+  --success-text: #1e7e34;
+  --success-border: #a8e6b9;
+
+  --error-bg: #fdecea;
+  --error-text: #d32f2f;
+  --error-border: #f5c1bc;
+
+  /* Node header & preview colors - Light mode */
+  --node-header-bg: #f8fafc;
+  --node-header-text: #1e293b;
+  --node-preview-bg: #ffffff;
+
+  /* Node header backgrounds - Light mode */
+  --node-db-header: #e8f5e9;
+  --node-env-header: #e3f2fd;
+  --node-trigger-header: #fff3e0;
+  --node-api-header: #f3e5f5;
+  --node-json-header: #e8eaf6;
+  --node-done-header: #e0f2f1;
+
+  /* Preview colors */
+  --preview-bg: #f1f5f9; /* 밝은 회색 */
 }
 
 .dark {
@@ -38,6 +87,55 @@
   --canvas-grid: rgba(255, 255, 255, 0.1);
   --primary-accent: #60a5fa;
   --primary-accent-hover: #93c5fd;
+
+  /* Node type specific colors - Dark mode */
+  --node-db-bg: #1b5e20;
+  --node-db-border: #4caf50;
+  --node-db-text: #a5d6a7;
+
+  --node-env-bg: #0d47a1;
+  --node-env-border: #2196f3;
+  --node-env-text: #90caf9;
+
+  --node-trigger-bg: #e65100;
+  --node-trigger-border: #ff9800;
+  --node-trigger-text: #ffcc80;
+
+  --node-api-bg: #4a148c;
+  --node-api-border: #9c27b0;
+  --node-api-text: #e1bee7;
+
+  --node-json-bg: #1a237e;
+  --node-json-border: #3f51b5;
+  --node-json-text: #c5cae9;
+
+  --node-done-bg: #004d40;
+  --node-done-border: #009688;
+  --node-done-text: #b2dfdb;
+
+  --success-bg: #1e4620;
+  --success-text: #81c995;
+  --success-border: #2e7d32;
+
+  --error-bg: #451c1a;
+  --error-text: #f88078;
+  --error-border: #c62828;
+
+  /* Node header & preview colors - Dark mode */
+  --node-header-bg: #1e293b;
+  --node-header-text: #e2e8f0;
+  --node-preview-bg: #0f172a;
+
+  /* Node header backgrounds - Dark mode */
+  --node-db-header: #1b5e20;
+  --node-env-header: #0d47a1;
+  --node-trigger-header: #e65100;
+  --node-api-header: #4a148c;
+  --node-json-header: #1a237e;
+  --node-done-header: #004d40;
+
+  /* Preview colors - Dark mode */
+  --preview-bg: #1e293b; /* 어두운 회색 */
 }
 
 body {

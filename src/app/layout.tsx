@@ -1,5 +1,6 @@
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: "Boat AI Practice",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider>{children}</ThemeProvider>
+        <Toaster position="bottom-right" />
       </body>
     </html>
   );
