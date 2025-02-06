@@ -64,3 +64,22 @@
   color: var(--text-primary);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.fileInputLabel {
+  padding: 0.5rem 1rem;
+  background-color: var(--button-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  color: var(--text-primary);
+}
+
+.fileInputLabel:hover {
+  background-color: var(--button-hover);
+}
+
+.fileInput {
+  display: none;
+}
