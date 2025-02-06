@@ -201,7 +201,7 @@ const getNodePreview = (node: Node): string => {
 };
 
 export default function Home() {
-  // localStorage 접근을 위한 상태 관리 수정
+  // 1. 모든 useState Hooks
   const [initialState, setInitialState] = useState({
     isInitialized: false,
     nodes: [] as Node[],
@@ -209,7 +209,86 @@ export default function Home() {
     isExpanded: true,
   });
 
-  // 컴포넌트 마운트 시 localStorage 데이터 로드
+  const [nodes, setNodes] = useState<Node[]>(initialState.nodes);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(
+    initialState.expandedItems
+  );
+  const [isExpanded, setIsExpanded] = useState(initialState.isExpanded);
+  const [canvasRef, setCanvasRef] = useState<HTMLDivElement | null>(null);
+  const [dragState, setDragState] = useState<DragState>({
+    isDragging: false,
+    currentNodeId: null,
+    startPosition: null,
+    offset: null,
+  });
+  const [resizeState, setResizeState] = useState<ResizeState>({
+    isResizing: false,
+    nodeId: null,
+    startWidth: null,
+    startX: null,
+  });
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    nodeId: "",
+    nodeType: "",
+    config: null,
+  });
+  const [history, setHistory] = useState<HistoryState>({
+    past: [],
+    present: {
+      nodes: [],
+      connections: [],
+    },
+    future: [],
+  });
+  const [draggingConnection, setDraggingConnection] = useState<{
+    sourcePoint: ConnectionPoint;
+    mousePosition: { x: number; y: number };
+  } | null>(null);
+
+  // 2. useRef Hooks
+  const nodeSizesRef = useRef<
+    Record<string, { width: number; height: number }>
+  >({});
+
+  // 3. useCallback Hooks
+  const updateNodeSize = useCallback(
+    (nodeId: string, element: HTMLElement | null) => {
+      if (!element) return;
+      nodeSizesRef.current[nodeId] = {
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+      };
+    },
+    []
+  );
+
+  const saveToHistory = useCallback(() => {
+    setHistory((prev) => ({
+      past: [...prev.past, prev.present],
+      present: {
+        nodes,
+        connections: [],
+      },
+      future: [],
+    }));
+  }, [nodes]);
+
+  const undo = useCallback(() => {
+    setHistory((prev) => {
+      if (prev.past.length === 0) return prev;
+      const newPast = prev.past.slice(0, -1);
+      const newPresent = prev.past[prev.past.length - 1];
+      setNodes(newPresent.nodes);
+      return {
+        past: newPast,
+        present: newPresent,
+        future: [prev.present, ...prev.future],
+      };
+    });
+  }, []);
+
+  // 4. useEffect Hooks
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedNodes = localStorage.getItem("canvasNodes");
@@ -227,86 +306,6 @@ export default function Home() {
     }
   }, []);
 
-  // 실제 상태들은 initialState에서 가져옴
-  const [nodes, setNodes] = useState<Node[]>(initialState.nodes);
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(
-    initialState.expandedItems
-  );
-  const [isExpanded, setIsExpanded] = useState(initialState.isExpanded);
-
-  // 초기화가 완료되지 않았다면 로딩 상태 표시
-  if (!initialState.isInitialized) {
-    return <div>Loading...</div>;
-  }
-
-  const [dragState, setDragState] = useState<DragState>({
-    isDragging: false,
-    currentNodeId: null,
-    startPosition: null,
-    offset: null,
-  });
-
-  const [resizeState, setResizeState] = useState<ResizeState>({
-    isResizing: false,
-    nodeId: null,
-    startWidth: null,
-    startX: null,
-  });
-
-  // modalState 타입 지정
-  const [modalState, setModalState] = useState<ModalState>({
-    isOpen: false,
-    nodeId: "",
-    nodeType: "",
-    config: null,
-  });
-
-  const [canvasRef, setCanvasRef] = useState<HTMLDivElement | null>(null);
-  const nodeSizesRef = useRef<
-    Record<string, { width: number; height: number }>
-  >({});
-
-  // 히스토리 상태 추가
-  const [history, setHistory] = useState<HistoryState>({
-    past: [],
-    present: {
-      nodes: [],
-      connections: [],
-    },
-    future: [],
-  });
-
-  // 현재 상태를 히스토리에 저장하는 함수
-  const saveToHistory = useCallback(() => {
-    setHistory((prev) => ({
-      past: [...prev.past, prev.present],
-      present: {
-        nodes,
-        connections: [],
-      },
-      future: [],
-    }));
-  }, [nodes]);
-
-  // Undo 함수
-  const undo = useCallback(() => {
-    setHistory((prev) => {
-      if (prev.past.length === 0) return prev;
-
-      const newPast = prev.past.slice(0, -1);
-      const newPresent = prev.past[prev.past.length - 1];
-
-      setNodes(newPresent.nodes);
-
-      return {
-        past: newPast,
-        present: newPresent,
-        future: [prev.present, ...prev.future],
-      };
-    });
-  }, []);
-
-  // 키보드 이벤트 리스너 추가
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "z") {
@@ -319,17 +318,20 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo]);
 
-  // 노드나 연결이 변경될 때마다 히스토리 저장
   useEffect(() => {
     if (history.present.nodes !== nodes) {
       saveToHistory();
     }
   }, [nodes, history.present, saveToHistory]);
 
-  // 노드가 변경될 때마다 localStorage에 저장
   useEffect(() => {
     localStorage.setItem("canvasNodes", JSON.stringify(nodes));
   }, [nodes]);
+
+  // 초기화 체크
+  if (!initialState.isInitialized) {
+    return <div>Loading...</div>;
+  }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -713,36 +715,6 @@ export default function Home() {
     setModalState({ isOpen: false, nodeId: "", nodeType: "", config: null });
   };
 
-  // 노드 크기 업데이트를 useCallback으로 메모이제이션
-  const updateNodeSize = useCallback(
-    (nodeId: string, element: HTMLElement | null) => {
-      if (!element) return;
-
-      const { width, height } = element.getBoundingClientRect();
-      const currentSize = nodeSizesRef.current[nodeId];
-
-      // 크기가 실제로 변경된 경우에만 업데이트
-      if (
-        !currentSize ||
-        currentSize.width !== width ||
-        currentSize.height !== height
-      ) {
-        nodeSizesRef.current = {
-          ...nodeSizesRef.current,
-          [nodeId]: { width, height },
-        };
-      }
-    },
-    []
-  );
-
-  // 상태 추가
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [draggingConnection, setDraggingConnection] = useState<{
-    sourcePoint: ConnectionPoint;
-    mousePosition: { x: number; y: number };
-  } | null>(null);
-
   const ConnectionPoints = ({ nodeId }: { nodeId: string }) => {
     const points: ConnectionPointType[] = ["top", "right", "bottom", "left"];
 
@@ -818,9 +790,8 @@ export default function Home() {
             sourcePoint: draggingConnection.sourcePoint,
             targetPoint,
           };
-          setConnections((prev) => [...prev, newConnection]);
+          setDraggingConnection(null);
         }
-        setDraggingConnection(null);
       }
     };
 
@@ -908,7 +879,7 @@ export default function Home() {
             <polygon points="0 0, 10 3.5, 0 7" className={styles.arrowHead} />
           </marker>
         </defs>
-        {connections.map((connection) => (
+        {history.present.connections.map((connection) => (
           <path
             key={connection.id}
             className={styles.connectionLine}

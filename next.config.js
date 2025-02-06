@@ -4,10 +4,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // 빌드 중 ESLint 검사 비활성화
   },
-  output: "standalone",
-  experimental: {
-    appDir: true,
-  },
 };
 
 module.exports = nextConfig;
